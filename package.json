@@ -1,0 +1,35 @@
+{
+  "name": "fortis",
+  "version": "1.0.20",
+  "description": "A lightweight, secure, and easy-to-use Authentication & Authorization SDK for Node.js applications.",
+  "author": "Mashrafi Mahin",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "index.js",
+  "keywords": [
+    "authentication",
+    "authorization",
+    "auth",
+    "sdk",
+    "fortis",
+    "security",
+    "login",
+    "signup",
+    "password",
+    "user-management"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
