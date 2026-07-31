@@ -1,11 +1,50 @@
 {
-  "name": "fortis",
-  "version": "1.0.20",
+  "name": "@fortis/auth",
+  "version": "1.0.0",
+  "private": false,
   "description": "A lightweight, secure, and easy-to-use Authentication & Authorization SDK for Node.js applications.",
-  "author": "Mashrafi Mahin",
   "license": "MIT",
+  "author": {
+    "name": "Mashrafi Mahin",
+    "email": "mashrafi.devs@gmail.com",
+    "url": "https://github.com/mashrafimahin"
+  },
+  "contributors": [],
+  "funding": {
+    "type": "individual",
+    "url": ""
+  },
   "type": "commonjs",
   "main": "index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.js",
+      "default": "./index.js"
+    },
+    "./config": {
+      "require": "./config/index.js",
+      "default": "./config/index.js"
+    },
+    "./utils": {
+      "require": "./utils/index.js",
+      "default": "./utils/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "config/",
+    "utils/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "authentication",
     "authorization",
@@ -16,20 +55,21 @@
     "login",
     "signup",
     "password",
-    "user-management"
+    "user-management",
+    "nodejs",
+    "api"
   ],
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/mashrafimahin/Fortis_SDK.git"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/mashrafimahin/Fortis_SDK/issues"
   },
-  "homepage": "",
-  "engines": {
-    "node": ">=12.0.0"
-  },
+  "homepage": "https://github.com/mashrafimahin/Fortis_SDK/#readme",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "prepublishOnly": "npm test",
+    "lint": "eslint ."
   }
 }
