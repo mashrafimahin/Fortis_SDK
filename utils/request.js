@@ -6,19 +6,22 @@
    modified: 31/07/2026
 **/
 
-const baseUrl = "https://mahiin.netlify.app";
+const baseUrl = "http://localhost:3000";
 
 // flexible requests
 const request = async (path, context, data) => {
   try {
     // merge data
-    // const mergedData = {}
-    // console.log({
-    // projectId: context.projectId,
-    // secretKey: context.secret,
-    // dbURI: context.db,
-    // data,
-    // });
+    const mergedData = {
+      configs: {
+        projectId: context.projectId,
+        secretKey: context.secret,
+        dbURI: context.db,
+      },
+      info: {
+        ...data,
+      },
+    };
 
     // connect to api
     const response = await fetch(`${baseUrl}${path}`, {
