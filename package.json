@@ -1,18 +1,13 @@
 {
-  "name": "@fortis/auth",
+  "name": "@fortis/express",
   "version": "1.0.0",
   "private": false,
-  "description": "A lightweight, secure, and easy-to-use Authentication & Authorization SDK for Node.js applications.",
+  "description": "A lightweight, secure, and easy-to-use Authentication & Authorization SDK for Node/Express applications.",
   "license": "MIT",
   "author": {
     "name": "Mashrafi Mahin",
     "email": "mashrafi.devs@gmail.com",
     "url": "https://github.com/mashrafimahin"
-  },
-  "contributors": [],
-  "funding": {
-    "type": "individual",
-    "url": ""
   },
   "type": "commonjs",
   "main": "index.js",
