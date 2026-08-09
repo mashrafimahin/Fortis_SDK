@@ -32,23 +32,13 @@ class FortisConfig {
     instance = this;
   }
 
-  // available private property
-  get projectId() {
-    return this.#project_id;
-  }
-  get secret() {
-    return this.#secret_key;
-  }
-  get db() {
-    return this.#db_uri;
-  }
-
   // signup
   userSignup(signupInfo) {
     return FortisMethods.signup(this, signupInfo);
   }
   // login
   userLogin(loginInfo) {
+    console.log("login from config - passed");
     return FortisMethods.login(this, loginInfo);
   }
   // update
