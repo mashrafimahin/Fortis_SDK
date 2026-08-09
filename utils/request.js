@@ -38,8 +38,8 @@ const request = async (path, context, data) => {
     }
 
     const result = await response.json();
-    console.log(result);
-    // return result;
+    // console.log(result);
+    return result;
   } catch (err) {
     // console.log(err);
     return err;
