@@ -13,11 +13,7 @@ const request = async (path, context, data) => {
   try {
     // merge data
     const mergedData = {
-      configs: {
-        projectId: context.projectId,
-        secretKey: context.secret,
-        dbURI: context.db,
-      },
+      configs: context._getConfig(),
       info: {
         ...data,
       },

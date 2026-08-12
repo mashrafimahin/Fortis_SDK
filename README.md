@@ -1,23 +1,22 @@
 <div align="center">
 
-# 🔐 Fortis Auth SDK
+# 🛡️ Fortis AuthSDK
 
-**A lightweight, secure, and easy-to-use Authentication & Authorization SDK**
+**A production-ready Authentication & Authorization SDK suite for modern applications**
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![npm version](https://img.shields.io/badge/npm-v1.0.20-blue.svg)](https://www.npmjs.com/package/fortis)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D12.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![GitHub](https://img.shields.io/badge/GitHub-Fortis_SDK-181717.svg?logo=github)](https://github.com/mashrafimahin/Fortis_SDK)
 
 ---
 
-[Installation](#installation) •
-[Quick Start](#quick-start) •
-[API Reference](#api-reference) •
-[Configuration](#configuration) •
-[Examples](#examples) •
-[Contributing](#contributing) •
-[License](#license)
+[Overview](#-overview) •
+[Packages](#-packages) •
+[Getting Started](#-getting-started) •
+[Documentation](#-documentation) •
+[Contributing](#-contributing) •
+[License](#-license)
 
 </div>
 
@@ -25,43 +24,47 @@
 
 ## 📋 Overview
 
-**Fortis Auth SDK** is a powerful, production-ready authentication and authorization client library. It provides a seamless interface for integrating secure user management features into any Node.js application. Built with simplicity and security in mind, Fortis handles all the heavy lifting of authentication so you can focus on building your application.
+**Fortis AuthSDK** is a collection of lightweight, secure, and developer-friendly authentication and authorization SDKs. Each package is designed to integrate seamlessly with your stack, handling the heavy lifting of user management so you can focus on building your application.
 
-### ✨ Features
+Built with **simplicity**, **security**, and **zero external dependencies** in mind, Fortis leverages modern JavaScript features like native `fetch` and private class fields to deliver a clean, promise-based API.
 
-- ✅ **Complete Auth Flow** — Signup, Login, Logout, and Session Management
-- ✅ **Account Management** — Update profiles, Delete accounts
-- ✅ **Password Management** — Reset and Forgot Password workflows
-- ✅ **Singleton Pattern** — Single configuration instance across your entire application
-- ✅ **Secure by Design** — Private fields for sensitive credentials
-- ✅ **Lightweight** — Zero external dependencies, built on native `fetch`
-- ✅ **Promise-based** — Modern async/await API
-- ✅ **MIT Licensed** — Free for personal and commercial use
+### ✨ Core Principles
 
----
-
-## 📦 Installation
-
-Install the package via **npm**:
-
-```bash
-npm install fortis
-```
-
-Or via **yarn**:
-
-```bash
-yarn add fortis
-```
+- 🔒 **Secure by Design** — Sensitive credentials are stored in private fields, never exposed
+- 🪶 **Lightweight** — Zero external dependencies, built on native `fetch`
+- 🧩 **Modular** — Each package is self-contained and framework-agnostic
+- ⚡ **Modern** — Promise-based async/await API for clean, readable code
+- 🎯 **Simple** — Get started in just a few lines of code
 
 ---
 
-## 🚀 Quick Start
+## 📦 Packages
 
-Get up and running in just a few lines of code:
+| Package                                | Description                                              | Status    |
+| -------------------------------------- | -------------------------------------------------------- | --------- |
+| [**@fortis/express**](./node@express/) | Authentication & Authorization SDK for Node.js / Express | ✅ Stable |
+
+> 🚧 **More packages coming soon** — Stay tuned for additional framework integrations!
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- **Node.js `>= 18.0.0`** (required for native `fetch` support)
+- A running **Fortis authentication server**
+
+### Installation
+
+```bash
+npm install @fortis/express
+```
+
+### Quick Start
 
 ```javascript
-const FortisConfig = require("fortis");
+const FortisConfig = require("@fortis/express");
 
 // Initialize with your project credentials
 const auth = new FortisConfig({
@@ -86,195 +89,41 @@ const loginResponse = await auth.userLogin({
 
 ---
 
-## 🔧 Configuration
+## 📚 Documentation
 
-### Initialization Options
+Each package includes its own comprehensive documentation:
 
-When creating a new `FortisConfig` instance, you must provide a configuration object with the following properties:
+- [**@fortis/express**](./node@express/README.md) — Full API reference, configuration guide, error handling, and examples
 
-| Property    | Type     | Required | Description                             |
-| ----------- | -------- | -------- | --------------------------------------- |
-| `projectId` | `string` | ✅ Yes   | Your unique project identifier          |
-| `secret`    | `string` | ✅ Yes   | Your secret API key                     |
-| `dbURI`     | `string` | ❌ No    | Database connection URI (if applicable) |
+### Available Methods
 
-### Singleton Behavior
-
-Fortis follows the **Singleton design pattern**. Once initialized, any subsequent instantiation with `new FortisConfig()` will return the same instance, ensuring consistent configuration across your entire application.
-
-```javascript
-const auth1 = new FortisConfig({ projectId: "abc", secret: "xyz" });
-const auth2 = new FortisConfig({ projectId: "abc", secret: "xyz" });
-
-console.log(auth1 === auth2); // true
-```
+| Method             | Description                         |
+| ------------------ | ----------------------------------- |
+| `userSignup()`     | Register a new user account         |
+| `userLogin()`      | Authenticate an existing user       |
+| `userUpdate()`     | Update a user's profile information |
+| `userLogout()`     | Log out a user from their session   |
+| `userResetPass()`  | Reset a user's password             |
+| `userForgotPass()` | Initiate a forgot password flow     |
+| `userDeletion()`   | Permanently delete a user account   |
 
 ---
 
-## 📚 API Reference
-
-### `userSignup(signupInfo)`
-
-Register a new user account.
-
-```javascript
-const result = await auth.userSignup({
-  email: "user@example.com",
-  password: "your-password",
-  name: "John Doe",
-  // ... any additional user fields
-});
-```
-
-### `userLogin(loginInfo)`
-
-Authenticate an existing user.
-
-```javascript
-const result = await auth.userLogin({
-  email: "user@example.com",
-  password: "your-password",
-});
-```
-
-### `userUpdate(updateInfo)`
-
-Update an existing user's profile information.
-
-```javascript
-const result = await auth.userUpdate({
-  email: "user@example.com",
-  name: "Jane Doe", // updated name
-  // ... other fields to update
-});
-```
-
-### `userLogout(logoutInfo)`
-
-Log out a user from their current session.
-
-```javascript
-const result = await auth.userLogout({
-  email: "user@example.com",
-  // session token if required
-});
-```
-
-### `userResetPass(resetInfo)`
-
-Reset a user's password (requires current password verification).
-
-```javascript
-const result = await auth.userResetPass({
-  email: "user@example.com",
-  currentPassword: "old-password",
-  newPassword: "new-password",
-});
-```
-
-### `userForgotPass(forgotInfo)`
-
-Initiate a forgot password flow (sends reset instructions).
-
-```javascript
-const result = await auth.userForgotPass({
-  email: "user@example.com",
-});
-```
-
-### `userDeletion(info)`
-
-Permanently delete a user account.
-
-```javascript
-const result = await auth.userDeletion({
-  email: "user@example.com",
-  password: "your-password", // confirmation required
-});
-```
-
----
-
-## 💡 Examples
-
-### Complete Express.js Integration
-
-```javascript
-const express = require("express");
-const FortisConfig = require("fortis");
-
-const app = express();
-app.use(express.json());
-
-// Initialize Fortis
-const auth = new FortisConfig({
-  projectId: process.env.FORTIS_PROJECT_ID,
-  secret: process.env.FORTIS_SECRET_KEY,
-});
-
-// Signup Route
-app.post("/api/signup", async (req, res) => {
-  try {
-    const result = await auth.userSignup(req.body);
-    res.status(201).json({ success: true, data: result });
-  } catch (error) {
-    res.status(400).json({ success: false, error: error.message });
-  }
-});
-
-// Login Route
-app.post("/api/login", async (req, res) => {
-  try {
-    const result = await auth.userLogin(req.body);
-    res.status(200).json({ success: true, data: result });
-  } catch (error) {
-    res.status(401).json({ success: false, error: error.message });
-  }
-});
-
-// Protected Route Example
-app.get("/api/profile", async (req, res) => {
-  // Your authentication middleware logic here
-  res.json({ message: "Protected data" });
-});
-
-app.listen(3000, () => console.log("Server running on port 3000"));
-```
-
-### Using Environment Variables
-
-```javascript
-const FortisConfig = require("fortis");
-
-const auth = new FortisConfig({
-  projectId: process.env.FORTIS_PROJECT_ID,
-  secret: process.env.FORTIS_SECRET_KEY,
-  dbURI: process.env.FORTIS_DB_URI,
-});
-```
-
----
-
-## 🏗️ Project Structure
+## 🏗️ Repository Structure
 
 ```
-fortis/
-├── index.js          # Entry point — exports FortisConfig
-├── config/
-│   └── index.js      # Core configuration class (Singleton)
-├── utils/
-│   ├── index.js      # Method definitions for all auth operations
-│   └── request.js    # HTTP request handler (fetch-based)
-├── package.json      # Package manifest
-└── README.md         # Documentation (you are here)
-```
-
----
-
-## 🧪 Running Tests
-
-```bash
-npm test
+AuthSDK/
+├── README.md            # This file — project overview
+├── LICENSE              # MIT License
+└── node@express/        # @fortis/express package
+    ├── index.js         # Entry point — exports FortisConfig
+    ├── config/
+    │   └── index.js     # Core configuration class (Singleton)
+    ├── utils/
+    │   ├── index.js     # Method definitions for all auth operations
+    │   └── request.js   # HTTP request handler (fetch-based)
+    ├── package.json     # Package manifest
+    └── README.md        # Package documentation
 ```
 
 ---
@@ -330,6 +179,6 @@ SOFTWARE.
 
 <div align="center">
 
-**Made with ❤️ by [Mashrafi Mahin](https://github.com/mashrafi-mahin)**
+**Made with ❤️ by [Mashrafi Mahin](https://github.com/mashrafimahin)**
 
 </div>

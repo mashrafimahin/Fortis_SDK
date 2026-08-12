@@ -16,6 +16,7 @@ class FortisConfig {
   #project_id;
   #secret_key;
   #db_uri;
+  #test;
 
   constructor(config) {
     if (instance) {
@@ -29,7 +30,18 @@ class FortisConfig {
     this.#project_id = config.projectId;
     this.#secret_key = config.secret;
     this.#db_uri = config.dbURI;
+    this.#test = config.test || false;
     instance = this;
+  }
+
+  // internal: expose config data to the SDK's own request layer only
+  _getConfig() {
+    return {
+      projectId: this.#project_id,
+      secret: this.#secret_key,
+      dbURI: this.#db_uri,
+      test: this.#test,
+    };
   }
 
   // signup
