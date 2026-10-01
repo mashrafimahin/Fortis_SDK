@@ -3,42 +3,43 @@
    role    : Founder & CEO
    project : Authentication & Authorization Service (SDK)
    created : 31/07/2026
-   modified: 31/07/2026
-**/
-
-const baseUrl = "http://localhost:3000";
+   modified: 01/10/2026
+ **/
 
 // flexible requests
-const request = async (path, context, data) => {
+const request = async (path, context, data, opts) => {
   try {
-    // merge data
-    const mergedData = {
-      configs: context._getConfig(),
-      info: {
-        ...data,
-      },
-    };
-
-    // connect to api
-    const response = await fetch(`${baseUrl}${path}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(mergedData),
-    });
-
-    // check connection
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+    const gated = !opts || opts.gated !== false;
+    const cfg = context._getConfig();
+    const baseUrl = context._getBaseUrl();
+    let body;
+    if (gated) {
+      body = {
+        configs: {
+          projectId: cfg.projectId,
+          secret: cfg.secret,
+          origin: cfg.origin,
+          provider: cfg.provider,
+          test: cfg.test,
+        },
+        info: { ...(data || {}) },
+      };
+    } else {
+      body = { ...(data || {}) };
     }
-
-    const result = await response.json();
-    // console.log(result);
+    const response = await fetch(baseUrl + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success === false) {
+      const msg = result.message || ("Request failed (" + response.status + ").");
+      throw Error(msg);
+    }
     return result;
   } catch (err) {
-    // console.log(err);
-    return err;
+    return { success: false, message: err && err.message };
   }
 };
 

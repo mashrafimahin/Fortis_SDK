@@ -46,7 +46,7 @@ The SDK communicates with your Fortis authentication server over HTTP, sending a
 ## ⚙️ Requirements
 
 - **Node.js `>= 18.0.0`** — required for native `fetch` support
-- A running **Fortis authentication server** (the SDK sends requests to `http://localhost:3000` by default)
+- A running **Fortis authentication server** (the SDK sends requests to `http://localhost:6030` by default — the balancer entry, same as frontend `VITE_API_KEY`)
 
 ---
 
@@ -77,7 +77,7 @@ const FortisConfig = require("@fortis/express");
 const auth = new FortisConfig({
   projectId: "your-project-id",
   secret: "your-secret-key",
-  dbURI: "your-database-uri", // optional
+  origin: "https://yourapp.com", // must match the project's registered origin
 });
 
 // Sign up a new user
@@ -105,9 +105,11 @@ When creating a new `FortisConfig` instance, you must provide a configuration ob
 | Property    | Type      | Required | Default | Description                             |
 | ----------- | --------- | -------- | ------- | --------------------------------------- |
 | `projectId` | `string`  | ✅ Yes   | —       | Your unique project identifier          |
-| `secret`    | `string`  | ✅ Yes   | —       | Your secret API key                     |
-| `dbURI`     | `string`  | ❌ No    | —       | Database connection URI (if applicable) |
-| `test`      | `boolean` | ❌ No    | `false` | Enable test mode                        |
+| `secret`    | `string`  | ✅ Yes   | —       | Your raw project secret (bcrypt-verified server-side) |
+| `origin`    | `string`  | ❌ No    | —       | Caller origin — must match the project's registered origin |
+| `provider`  | `string`  | ❌ No    | `emailPass` | Auth provider (`emailPass` on free plan; `oAuth` / `githubSSO` need a paid package) |
+| `baseUrl`     | `string`  | ❌ No    | `http://localhost:6030` | Balancer entry (same as frontend `VITE_API_KEY`); point at `http://localhost:8142` to hit the auth processor directly |
+| `test`      | `boolean` | ❌ No    | `false` | Enable test mode (bypasses `checkPoint`) |
 
 > ⚠️ **Note:** If `projectId` or `secret` is missing, the constructor throws:
 > `"FortisConfig requires projectId and secret"`
@@ -127,13 +129,9 @@ console.log(auth1 === auth2); // true
 
 ### Server Base URL
 
-The SDK sends all requests to a base URL defined in `utils/request.js`:
+The SDK sends all requests to `config.baseUrl` (default `http://localhost:6030`, the balancer entry — same as frontend `VITE_API_KEY`).
 
-```javascript
-const baseUrl = "http://localhost:3000";
-```
-
-All authentication endpoints are appended to this base URL (e.g. `POST http://localhost:3000/auth/signup`). Ensure your Fortis server is running and reachable at this address.
+All authentication endpoints are appended to this base URL (e.g. `POST http://localhost:6030/auth/signup`; the balancer strips `/auth` and forwards to the auth processor). Point `baseUrl` at `http://localhost:8142` to hit the auth processor directly.
 
 ---
 
@@ -185,7 +183,7 @@ const result = await auth.userUpdate({
 
 ### `userLogout(logoutInfo)`
 
-Log out a user from their current session.
+Log out a user from their current session (decrements the project's `sessions` counter server-side).
 
 - **Endpoint:** `POST /auth/logout`
 
@@ -196,42 +194,54 @@ const result = await auth.userLogout({
 });
 ```
 
-### `userResetPass(resetInfo)`
+### `checkToken(info)`
 
-Reset a user's password (requires current password verification).
+Verify any token issued by the service (`user_access` or `user_store`) and read its decoded claims.
 
-- **Endpoint:** `POST /auth/resetPass`
+- **Endpoint:** `POST /auth/token/checkToken` (plain `{ configs, info }` body, no `origin` gate)
 
 ```javascript
-const result = await auth.userResetPass({
-  email: "user@example.com",
-  currentPassword: "old-password",
-  newPassword: "new-password",
+const result = await auth.checkToken({
+  configs: { projectId: "your-project-id" },
+  info: { token: "eyJhbGciOi..." },
 });
 ```
 
-### `userForgotPass(forgotInfo)`
+### `newToken(info)`
 
-Initiate a forgot password flow (sends reset instructions).
+Issue a fresh token for an email (`type: "refresh"` returns a `user_store` token, anything else returns a `user_access` token).
 
-- **Endpoint:** `POST /auth/forgotPass`
+- **Endpoint:** `POST /auth/token/newToken` (plain `{ configs, info }` body, no `origin` gate)
 
 ```javascript
-const result = await auth.userForgotPass({
+const result = await auth.newToken({
+  configs: { projectId: "your-project-id" },
+  info: { email: "user@example.com", type: "refresh" },
+});
+```
+
+### `createOTP(info)`
+
+Request an email OTP (server mails the raw 6-digit code, returns the hashed copy for later matching).
+
+- **Endpoint:** `POST /auth/check/createOTP` (plain `{ email }` body, no `origin` gate)
+
+```javascript
+const result = await auth.createOTP({
   email: "user@example.com",
 });
 ```
 
-### `userDeletion(info)`
+### `checkOTP(info)`
 
-Permanently delete a user account.
+Verify an OTP against its stored hash.
 
-- **Endpoint:** `POST /auth/deleteAcc`
+- **Endpoint:** `POST /auth/check/checkOTP` (plain `{ otp, stored }` body, no `origin` gate)
 
 ```javascript
-const result = await auth.userDeletion({
-  email: "user@example.com",
-  password: "your-password", // confirmation required
+const result = await auth.checkOTP({
+  otp: "123456",
+  stored: "<hashed-otp-from-createOTP>",
 });
 ```
 
@@ -320,7 +330,7 @@ const FortisConfig = require("@fortis/express");
 const auth = new FortisConfig({
   projectId: process.env.FORTIS_PROJECT_ID,
   secret: process.env.FORTIS_SECRET_KEY,
-  dbURI: process.env.FORTIS_DB_URI,
+  origin: process.env.FORTIS_ORIGIN,
   test: process.env.NODE_ENV === "test",
 });
 ```
@@ -349,22 +359,16 @@ async function main() {
     password: "securePassword123",
   });
 
-  // Update profile
+  // Update access gate
   const update = await auth.userUpdate({
     email: "user@example.com",
     name: "Jane Doe",
   });
 
-  // Reset password
-  const reset = await auth.userResetPass({
-    email: "user@example.com",
-    currentPassword: "securePassword123",
-    newPassword: "newSecurePassword456",
-  });
-
-  // Forgot password
-  const forgot = await auth.userForgotPass({
-    email: "user@example.com",
+  // Verify a token
+  const checked = await auth.checkToken({
+    configs: { projectId: "your-project-id" },
+    info: { token: "eyJhbGciOi..." },
   });
 
   // Logout
@@ -372,10 +376,11 @@ async function main() {
     email: "user@example.com",
   });
 
-  // Delete account
-  const deletion = await auth.userDeletion({
-    email: "user@example.com",
-    password: "newSecurePassword456",
+  // Email OTP flow
+  const otp = await auth.createOTP({ email: "user@example.com" });
+  const otpCheck = await auth.checkOTP({
+    otp: "123456",
+    stored: otp.result.otp,
   });
 }
 

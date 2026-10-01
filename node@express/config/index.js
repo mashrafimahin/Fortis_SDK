@@ -15,7 +15,9 @@ const FortisMethods = require("../utils");
 class FortisConfig {
   #project_id;
   #secret_key;
-  #db_uri;
+  #origin;
+  #provider;
+  #baseUrl;
   #test;
 
   constructor(config) {
@@ -29,7 +31,10 @@ class FortisConfig {
 
     this.#project_id = config.projectId;
     this.#secret_key = config.secret;
-    this.#db_uri = config.dbURI;
+    this.#origin = config.origin;
+    this.#provider = config.provider || "emailPass";
+    // balancer entry (matches frontend VITE_API_KEY) — override for direct processor use
+    this.#baseUrl = config.baseUrl || config.fortisDomain || "http://localhost:6030";
     this.#test = config.test || false;
     instance = this;
   }
@@ -39,39 +44,48 @@ class FortisConfig {
     return {
       projectId: this.#project_id,
       secret: this.#secret_key,
-      dbURI: this.#db_uri,
+      origin: this.#origin,
+      provider: this.#provider,
       test: this.#test,
     };
   }
 
-  // signup
-  userSignup(signupInfo) {
-    return FortisMethods.signup(this, signupInfo);
+  // internal: base url for the request layer only
+  _getBaseUrl() {
+    return this.#baseUrl;
   }
-  // login
-  userLogin(loginInfo) {
-    console.log("login from config - passed");
-    return FortisMethods.login(this, loginInfo);
+
+  // signup -> POST /auth/signup
+  userSignup(signupInfo, dbModel) {
+    return FortisMethods.signup(this, signupInfo, dbModel);
   }
-  // update
-  userUpdate(updateInfo) {
-    return FortisMethods.update(this, updateInfo);
+  // login -> POST /auth/login
+  userLogin(loginInfo, dbModel) {
+    return FortisMethods.login(this, loginInfo, dbModel);
   }
-  // logout
-  userLogout(logoutInfo) {
-    return FortisMethods.logout(this, logoutInfo);
+  // update access gate -> POST /auth/update
+  userUpdate(updateInfo, dbModel) {
+    return FortisMethods.update(this, updateInfo, dbModel);
   }
-  // reset password
-  userResetPass(resetInfo) {
-    return FortisMethods.resetPassword(this, resetInfo);
+  // logout -> POST /auth/logout
+  userLogout(logoutInfo, dbModel) {
+    return FortisMethods.logout(this, logoutInfo, dbModel);
   }
-  // forgot password
-  userForgotPass(forgotInfo) {
-    return FortisMethods.forgotPassword(this, forgotInfo);
+  // verify any issued token -> POST /token/checkToken
+  checkToken(info) {
+    return FortisMethods.checkToken(this, info);
   }
-  // delete account
-  userDeletion(info) {
-    return FortisMethods.deleteAccount(this, info);
+  // issue a fresh token -> POST /token/newToken
+  newToken(info) {
+    return FortisMethods.newToken(this, info);
+  }
+  // request an email otp -> POST /check/createOTP
+  createOTP(info) {
+    return FortisMethods.createOTP(this, info);
+  }
+  // verify an otp -> POST /check/checkOTP
+  checkOTP(info) {
+    return FortisMethods.checkOTP(this, info);
   }
 }
 
