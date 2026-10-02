@@ -16,7 +16,6 @@ class FortisConfig {
   #project_id;
   #secret_key;
   #origin;
-  #provider;
   #test;
 
   constructor(config) {
@@ -31,7 +30,6 @@ class FortisConfig {
     this.#project_id = config.projectId;
     this.#secret_key = config.secret;
     this.#origin = config.origin;
-    this.#provider = config.provider || "emailPass";
     this.#test = config.test || false;
     instance = this;
   }
@@ -42,7 +40,6 @@ class FortisConfig {
       projectId: this.#project_id,
       secret: this.#secret_key,
       origin: this.#origin,
-      provider: this.#provider,
       test: this.#test,
     };
   }

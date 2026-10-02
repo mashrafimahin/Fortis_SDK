@@ -1,469 +1,1178 @@
-<div align="center">
+# Fortis Auth Service
 
-# 🔐 Fortis Auth SDK
+> **A simple, secure authentication service for Node.js and Express applications.**
 
-**A lightweight, secure, and easy-to-use Authentication & Authorization SDK for Node.js / Express**
+Fortis is an authentication SDK designed to make user authentication easier to integrate into Node.js and Express applications.
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![npm version](https://img.shields.io/badge/npm-v1.0.0-blue.svg)](https://www.npmjs.com/package/@fortis/express)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+It provides a complete authentication workflow including **signup, login, logout, access-token validation, refresh-token generation, OTP verification, user updates, and usage controls**—while keeping your authentication logic simple and consistent.
 
----
-
-[Installation](#installation) •
-[Quick Start](#quick-start) •
-[Configuration](#configuration) •
-[API Reference](#api-reference) •
-[Error Handling](#error-handling) •
-[Examples](#examples) •
-[Contributing](#contributing) •
-[License](#license)
-
-</div>
+Instead of rebuilding authentication logic for every project, initialize Fortis once and use its methods wherever authentication is required.
 
 ---
 
-## 📋 Overview
+## ✨ Features
 
-**Fortis Auth SDK** is a powerful, production-ready authentication and authorization client library for Node.js applications. It provides a seamless interface for integrating secure user management features into any Node.js or Express backend. Built with simplicity and security in mind, Fortis handles all the heavy lifting of authentication so you can focus on building your application.
-
-The SDK communicates with your Fortis authentication server over HTTP, sending all requests as `POST` calls to a configurable base URL.
-
-### ✨ Features
-
-- ✅ **Complete Auth Flow** — Signup, Login, Logout, and Session Management
-- ✅ **Account Management** — Update profiles, Delete accounts
-- ✅ **Password Management** — Reset and Forgot Password workflows
-- ✅ **Singleton Pattern** — Single configuration instance across your entire application
-- ✅ **Secure by Design** — Private fields for sensitive credentials
-- ✅ **Lightweight** — Zero external dependencies, built on native `fetch`
-- ✅ **Promise-based** — Modern async/await API
-- ✅ **MIT Licensed** — Free for personal and commercial use
-
----
-
-## ⚙️ Requirements
-
-- **Node.js `>= 18.0.0`** — required for native `fetch` support
-- A running **Fortis authentication server** (the SDK sends requests to `http://localhost:6030` by default — the balancer entry, same as frontend `VITE_API_KEY`)
+- 🔐 Email & password authentication
+- 👤 User signup and login
+- 🚪 User logout
+- 🎫 Access & refresh token management
+- ✅ Token validation
+- 🔄 Refresh-token based authentication
+- 📧 OTP generation and verification
+- 🗄️ Optional Mongoose integration
+- 🛡️ Project ID + secret authentication
+- 🌐 Origin-based request protection
+- 📊 Request limits and package controls
+- ⚡ Simple Express integration
+- 🧩 Consistent `{ success, message }` responses
+- 🚫 SDK methods don't throw errors for normal authentication failures
 
 ---
 
 ## 📦 Installation
 
-Install the package via **npm**:
+Install Fortis using npm:
 
 ```bash
 npm install @fortis/express
 ```
 
-Or via **yarn**:
+Or:
 
 ```bash
-yarn add @fortis/express
+npm i @fortis/express
 ```
 
 ---
 
-## 🚀 Quick Start
+# 🚀 Quick Start
 
-Get up and running in just a few lines of code:
+A basic Fortis setup looks like this:
 
-```javascript
-const FortisConfig = require("@fortis/express");
-
-// Initialize with your project credentials
-const auth = new FortisConfig({
-  projectId: "your-project-id",
-  secret: "your-secret-key",
-  origin: "https://yourapp.com", // must match the project's registered origin
-});
-
-// Sign up a new user
-const signupResponse = await auth.userSignup({
-  email: "user@example.com",
-  password: "securePassword123",
-  name: "John Doe",
-});
-
-// Log in an existing user
-const loginResponse = await auth.userLogin({
-  email: "user@example.com",
-  password: "securePassword123",
-});
-```
-
----
-
-## 🔧 Configuration
-
-### Initialization Options
-
-When creating a new `FortisConfig` instance, you must provide a configuration object with the following properties:
-
-| Property    | Type      | Required | Default | Description                             |
-| ----------- | --------- | -------- | ------- | --------------------------------------- |
-| `projectId` | `string`  | ✅ Yes   | —       | Your unique project identifier          |
-| `secret`    | `string`  | ✅ Yes   | —       | Your raw project secret (bcrypt-verified server-side) |
-| `origin`    | `string`  | ❌ No    | —       | Caller origin — must match the project's registered origin |
-| `provider`  | `string`  | ❌ No    | `emailPass` | Auth provider (`emailPass` on free plan; `oAuth` / `githubSSO` need a paid package) |
-| `baseUrl`     | `string`  | ❌ No    | `http://localhost:6030` | Balancer entry (same as frontend `VITE_API_KEY`); point at `http://localhost:8142` to hit the auth processor directly |
-| `test`      | `boolean` | ❌ No    | `false` | Enable test mode (bypasses `checkPoint`) |
-
-> ⚠️ **Note:** If `projectId` or `secret` is missing, the constructor throws:
-> `"FortisConfig requires projectId and secret"`
-
-### Singleton Behavior
-
-Fortis follows the **Singleton design pattern**. Once initialized, any subsequent instantiation with `new FortisConfig()` will return the **same instance**, ensuring consistent configuration across your entire application.
-
-```javascript
-const auth1 = new FortisConfig({ projectId: "abc", secret: "xyz" });
-const auth2 = new FortisConfig({ projectId: "abc", secret: "xyz" });
-
-console.log(auth1 === auth2); // true
-```
-
-> ⚠️ **Important:** Because of the singleton pattern, any configuration passed to subsequent instantiations is **ignored**. Only the first instance's configuration is used. To change configuration, restart your application.
-
-### Server Base URL
-
-The SDK sends all requests to `config.baseUrl` (default `http://localhost:6030`, the balancer entry — same as frontend `VITE_API_KEY`).
-
-All authentication endpoints are appended to this base URL (e.g. `POST http://localhost:6030/auth/signup`; the balancer strips `/auth` and forwards to the auth processor). Point `baseUrl` at `http://localhost:8142` to hit the auth processor directly.
-
----
-
-## 📚 API Reference
-
-All methods return a `Promise` that resolves to the server's JSON response. See [Error Handling](#error-handling) for details on how errors are surfaced.
-
-### `userSignup(signupInfo)`
-
-Register a new user account.
-
-- **Endpoint:** `POST /auth/signup`
-
-```javascript
-const result = await auth.userSignup({
-  email: "user@example.com",
-  password: "your-password",
-  name: "John Doe",
-  // ... any additional user fields
-});
-```
-
-### `userLogin(loginInfo)`
-
-Authenticate an existing user.
-
-- **Endpoint:** `POST /auth/login`
-
-```javascript
-const result = await auth.userLogin({
-  email: "user@example.com",
-  password: "your-password",
-});
-```
-
-### `userUpdate(updateInfo)`
-
-Update an existing user's profile information.
-
-- **Endpoint:** `POST /auth/update`
-
-```javascript
-const result = await auth.userUpdate({
-  email: "user@example.com",
-  name: "Jane Doe", // updated name
-  // ... other fields to update
-});
-```
-
-### `userLogout(logoutInfo)`
-
-Log out a user from their current session (decrements the project's `sessions` counter server-side).
-
-- **Endpoint:** `POST /auth/logout`
-
-```javascript
-const result = await auth.userLogout({
-  email: "user@example.com",
-  // session token if required
-});
-```
-
-### `checkToken(info)`
-
-Verify any token issued by the service (`user_access` or `user_store`) and read its decoded claims.
-
-- **Endpoint:** `POST /auth/token/checkToken` (plain `{ configs, info }` body, no `origin` gate)
-
-```javascript
-const result = await auth.checkToken({
-  configs: { projectId: "your-project-id" },
-  info: { token: "eyJhbGciOi..." },
-});
-```
-
-### `newToken(info)`
-
-Issue a fresh token for an email (`type: "refresh"` returns a `user_store` token, anything else returns a `user_access` token).
-
-- **Endpoint:** `POST /auth/token/newToken` (plain `{ configs, info }` body, no `origin` gate)
-
-```javascript
-const result = await auth.newToken({
-  configs: { projectId: "your-project-id" },
-  info: { email: "user@example.com", type: "refresh" },
-});
-```
-
-### `createOTP(info)`
-
-Request an email OTP (server mails the raw 6-digit code, returns the hashed copy for later matching).
-
-- **Endpoint:** `POST /auth/check/createOTP` (plain `{ email }` body, no `origin` gate)
-
-```javascript
-const result = await auth.createOTP({
-  email: "user@example.com",
-});
-```
-
-### `checkOTP(info)`
-
-Verify an OTP against its stored hash.
-
-- **Endpoint:** `POST /auth/check/checkOTP` (plain `{ otp, stored }` body, no `origin` gate)
-
-```javascript
-const result = await auth.checkOTP({
-  otp: "123456",
-  stored: "<hashed-otp-from-createOTP>",
-});
-```
-
----
-
-## ⚠️ Error Handling
-
-> **Important:** The SDK does **not** throw errors. Instead, it **returns** the error object as the resolved value of the promise. This means you should check the response for errors rather than relying on `try/catch`.
-
-```javascript
-const result = await auth.userLogin({
-  email: "user@example.com",
-  password: "wrong-password",
-});
-
-if (result instanceof Error) {
-  console.error("Login failed:", result.message);
-} else {
-  console.log("Login successful:", result);
-}
-```
-
-The SDK returns an `Error` object in two cases:
-
-1. **HTTP errors** — when the server responds with a non-`2xx` status code:
-   ```
-   HTTP error! Status: 401
-   ```
-2. **Network / fetch failures** — when the server is unreachable or the request fails.
-
----
-
-## 💡 Examples
-
-### Complete Express.js Integration
-
-```javascript
+```js
 const express = require("express");
+const mongoose = require("mongoose");
 const FortisConfig = require("@fortis/express");
 
-const app = express();
-app.use(express.json());
+mongoose.connect(process.env.MONGO_URI);
 
-// Initialize Fortis
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    email: {
+      type: String,
+      unique: true,
+    },
+    password: String,
+    accessToken: String,
+    refreshToken: String,
+    name: String,
+  }),
+);
+
 const auth = new FortisConfig({
   projectId: process.env.FORTIS_PROJECT_ID,
   secret: process.env.FORTIS_SECRET_KEY,
+  origin: process.env.FORTIS_ORIGIN,
+  provider: "emailPass",
 });
 
-// Signup Route
+const app = express();
+
+app.use(express.json());
+
 app.post("/api/signup", async (req, res) => {
-  const result = await auth.userSignup(req.body);
+  const result = await auth.userSignup(req.body, User);
 
-  if (result instanceof Error) {
-    return res.status(400).json({ success: false, error: result.message });
+  if (!result.success) {
+    return res.status(400).json(result);
   }
 
-  res.status(201).json({ success: true, data: result });
+  res.status(201).json(result);
 });
 
-// Login Route
 app.post("/api/login", async (req, res) => {
-  const result = await auth.userLogin(req.body);
+  const result = await auth.userLogin(req.body, User);
 
-  if (result instanceof Error) {
-    return res.status(401).json({ success: false, error: result.message });
+  if (!result.success) {
+    return res.status(401).json(result);
   }
 
-  res.status(200).json({ success: true, data: result });
+  res.json(result);
 });
 
-// Protected Route Example
-app.get("/api/profile", async (req, res) => {
-  // Your authentication middleware logic here
-  res.json({ message: "Protected data" });
+app.post("/api/logout", async (req, res) => {
+  const result = await auth.userLogout(req.body, User);
+
+  res.json(result);
 });
 
-app.listen(3000, () => console.log("Server running on port 3000"));
+async function requireAuth(req, res, next) {
+  const token = (req.headers.authorization || "").replace("Bearer ", "");
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Token required",
+    });
+  }
+
+  const result = await auth.checkToken({
+    configs: {
+      projectId: process.env.FORTIS_PROJECT_ID,
+    },
+    info: {
+      token,
+    },
+  });
+
+  if (!result.success || !result.result?.valid) {
+    return res.status(401).json(result);
+  }
+
+  req.user = result.result;
+
+  next();
+}
+
+app.get("/api/me", requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
+});
+
+app.listen(5000, () => {
+  console.log("API running on :5000");
+});
 ```
 
-### Using Environment Variables
+That's enough to get a basic authentication flow running.
 
-```javascript
+---
+
+# 🔑 1. Create Your Fortis Project
+
+Before using the SDK, create a Fortis project.
+
+### Step 1 — Create your Fortis account
+
+Create an account through the Fortis dashboard.
+
+### Step 2 — Verify your account
+
+Complete the OTP verification process.
+
+### Step 3 — Create a project
+
+Create a new project and configure:
+
+- Project ID
+- Origin
+- Authentication provider
+
+For the current email/password provider:
+
+```text
+emailPass
+```
+
+### Step 4 — Generate your secret
+
+Rotate your project secret and copy the generated hexadecimal secret.
+
+> ⚠️ The raw secret is shown only once. Store it securely.
+
+### Step 5 — Keep the secret server-side
+
+**Never expose your Fortis secret in frontend code.**
+
+Do not put it in:
+
+```text
+VITE_*
+NEXT_PUBLIC_*
+REACT_APP_*
+```
+
+or any other browser-exposed environment variable.
+
+---
+
+# ⚙️ 2. Environment Variables
+
+A typical `.env` file:
+
+```env
+PORT=5000
+
+FORTIS_PROJECT_ID=your_project_id
+FORTIS_SECRET_KEY=your_secret_key
+FORTIS_ORIGIN=http://localhost:5000
+
+FORTIS_URL=http://localhost:6030
+
+MONGO_URI=mongodb://localhost:27017/your_database
+```
+
+### Environment variables
+
+| Variable            | Purpose                               |
+| ------------------- | ------------------------------------- |
+| `FORTIS_PROJECT_ID` | Identifies your Fortis project        |
+| `FORTIS_SECRET_KEY` | Authenticates your server with Fortis |
+| `FORTIS_ORIGIN`     | Origin associated with your project   |
+| `FORTIS_URL`        | Fortis service URL                    |
+| `MONGO_URI`         | Your MongoDB connection string        |
+| `PORT`              | Your Express server port              |
+
+---
+
+# 🧩 3. Initialize Fortis
+
+Initialize Fortis once in your server:
+
+```js
 const FortisConfig = require("@fortis/express");
 
 const auth = new FortisConfig({
   projectId: process.env.FORTIS_PROJECT_ID,
   secret: process.env.FORTIS_SECRET_KEY,
   origin: process.env.FORTIS_ORIGIN,
-  test: process.env.NODE_ENV === "test",
+  provider: "emailPass",
+  test: false,
 });
 ```
 
-### Handling All Auth Operations
+### Configuration
 
-```javascript
+```js
+{
+  (projectId, secret, origin, provider, test);
+}
+```
+
+| Option      | Description                    |
+| ----------- | ------------------------------ |
+| `projectId` | Your Fortis project ID         |
+| `secret`    | Your server-side Fortis secret |
+| `origin`    | Your configured project origin |
+| `provider`  | Authentication provider        |
+| `test`      | Development/test bypass mode   |
+
+For the current provider:
+
+```js
+provider: "emailPass";
+```
+
+---
+
+# 👤 4. User Model
+
+Fortis can work with your existing user model.
+
+A recommended Mongoose model contains:
+
+```js
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    email: {
+      type: String,
+      unique: true,
+    },
+    password: String,
+    accessToken: String,
+    refreshToken: String,
+    name: String,
+  }),
+);
+```
+
+You can pass the model directly to Fortis:
+
+```js
+await auth.userSignup(data, User);
+```
+
+When a model is supplied, Fortis can handle operations such as:
+
+- Duplicate-user checking
+- User saving
+- Password-related storage
+- Salt/password handling
+- Token storage
+- Token clearing
+
+Your user model can contain additional application-specific fields as needed.
+
+---
+
+# 📝 5. User Signup
+
+Use:
+
+```js
+auth.userSignup();
+```
+
+Example:
+
+```js
+const result = await auth.userSignup(
+  {
+    email: "user@example.com",
+    password: "strong-password",
+    name: "John Doe",
+  },
+  User,
+);
+```
+
+### Request
+
+```js
+{
+  (email, password, name);
+}
+```
+
+### Successful result
+
+Fortis returns authentication information including:
+
+```js
+{
+  success: (true, email, password, accessToken, refreshToken);
+}
+```
+
+The password returned by the service is the hashed password representation described by the service.
+
+### Possible failures
+
+```text
+User already exists
+Invalid project or secret
+Request blocked origin
+Request limit exceeded
+```
+
+---
+
+# 🔐 6. User Login
+
+Use:
+
+```js
+auth.userLogin();
+```
+
+Example:
+
+```js
+const result = await auth.userLogin(
+  {
+    email: "user@example.com",
+    password: "strong-password",
+  },
+  User,
+);
+```
+
+Fortis uses the stored password information from the supplied user model.
+
+A successful login generates a fresh access/refresh token pair.
+
+### Wrong password
+
+The service returns:
+
+```text
+Password does not match
+```
+
+If you don't provide a user model, the login flow can instead use the required stored password/salt information directly.
+
+---
+
+# 🎫 7. Access Token Validation
+
+Protected routes can use:
+
+```js
+auth.checkToken();
+```
+
+Example:
+
+```js
+const result = await auth.checkToken({
+  configs: {
+    projectId: process.env.FORTIS_PROJECT_ID,
+  },
+  info: {
+    token,
+  },
+});
+```
+
+The result contains information such as:
+
+```js
+{
+  (valid, type, email, issuedAt, expiresAt);
+}
+```
+
+A typical Express authentication middleware:
+
+```js
+async function requireAuth(req, res, next) {
+  const token = (req.headers.authorization || "").replace("Bearer ", "");
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: "Token required",
+    });
+  }
+
+  const result = await auth.checkToken({
+    configs: {
+      projectId: process.env.FORTIS_PROJECT_ID,
+    },
+    info: {
+      token,
+    },
+  });
+
+  if (!result.success || !result.result?.valid) {
+    return res.status(401).json(result);
+  }
+
+  req.user = result.result;
+
+  next();
+}
+```
+
+Then protect any route:
+
+```js
+app.get("/api/me", requireAuth, (req, res) => {
+  res.json({
+    success: true,
+    user: req.user,
+  });
+});
+```
+
+---
+
+# 🔄 8. Generate a New Token
+
+Fortis supports generating a new token through:
+
+```js
+auth.newToken();
+```
+
+Example:
+
+```js
+const result = await auth.newToken({
+  configs: {
+    projectId: process.env.FORTIS_PROJECT_ID,
+  },
+  info: {
+    email: "user@example.com",
+    type: "refresh",
+  },
+});
+```
+
+### Result
+
+```js
+{
+  (email, token);
+}
+```
+
+The token type determines the token being generated.
+
+For refresh-token based authentication:
+
+```js
+type: "refresh";
+```
+
+The refresh flow uses the stored user authentication information.
+
+---
+
+# 🚪 9. Logout
+
+Use:
+
+```js
+auth.userLogout();
+```
+
+Example:
+
+```js
+const result = await auth.userLogout(
+  {
+    email: "user@example.com",
+  },
+  User,
+);
+```
+
+The logout process can:
+
+- Remove the active session
+- Clear stored authentication tokens
+- Return information about access removal
+
+Example result information:
+
+```js
+{
+  (removeAccess, removeCookies);
+}
+```
+
+---
+
+# 📧 10. OTP
+
+Fortis also provides OTP generation and verification.
+
+## Create OTP
+
+```js
+const result = await auth.createOTP({
+  email: "user@example.com",
+});
+```
+
+The generated OTP is mailed by the service, while the returned value contains the hashed OTP.
+
+Example:
+
+```js
+{
+  otp: "hashed-otp";
+}
+```
+
+---
+
+## Verify OTP
+
+```js
+const result = await auth.checkOTP({
+  otp: "123456",
+  stored: hashedOtp,
+});
+```
+
+If the OTP matches, the operation succeeds.
+
+If it doesn't:
+
+```text
+OTP not matching
+```
+
+---
+
+# ✏️ 11. Update User
+
+Use:
+
+```js
+auth.userUpdate();
+```
+
+Example:
+
+```js
+const result = await auth.userUpdate(
+  {
+    email: "user@example.com",
+    name: "Updated Name",
+  },
+  User,
+);
+```
+
+The response includes:
+
+```js
+{
+  updateAccess;
+}
+```
+
+The update behavior depends on the current Fortis package/plan configuration.
+
+---
+
+# 🛡️ 12. Security
+
+Fortis uses several project-level controls when processing requests.
+
+### Project authentication
+
+Requests are associated with:
+
+```text
+projectId
+secret
+```
+
+### Origin protection
+
+The configured origin must match the project's expected origin.
+
+If it doesn't:
+
+```text
+Request blocked origin
+```
+
+### Server-side secret
+
+Your secret should exist **only on your backend**.
+
+Correct:
+
+```text
+Frontend
+   ↓
+Your API
+   ↓
+Fortis
+```
+
+Incorrect:
+
+```text
+Browser
+   ↓
+Fortis Secret
+```
+
+Never expose your Fortis secret to users.
+
+---
+
+# 📊 13. Plans & Request Limits
+
+The current free configuration supports:
+
+```text
+Provider: emailPass
+Requests: 100
+```
+
+When the request limit is exceeded, Fortis returns a message similar to:
+
+```text
+Request limit exceeded (x/y)
+```
+
+The service documentation indicates that additional usage requires purchasing the appropriate package.
+
+---
+
+# ❌ 14. Error Handling
+
+Fortis follows a simple response pattern.
+
+Successful operations generally contain:
+
+```js
+{
+  success: true,
+  ...
+}
+```
+
+Failed operations generally contain:
+
+```js
+{
+  success: false,
+  message: "..."
+}
+```
+
+### Common errors
+
+| Error                        | Meaning                                             |
+| ---------------------------- | --------------------------------------------------- |
+| `Invalid project or secret`  | Project credentials are invalid                     |
+| `Request blocked origin`     | Request origin doesn't match                        |
+| `Request limit exceeded`     | Project has exceeded its allowed request count      |
+| `User already exists`        | User is already registered                          |
+| `Password does not match`    | Login password is incorrect                         |
+| `Token expired-invalid-type` | Token is expired or not the expected type           |
+| `OTP not matching`           | OTP verification failed                             |
+| `No stored password`         | Required stored password information is unavailable |
+| Provider errors              | Authentication provider returned an error           |
+
+Fortis methods return authentication failures instead of throwing normal operational errors.
+
+> **Constructor exception:** missing required project credentials such as project ID or secret can cause the constructor to throw.
+
+---
+
+# 📚 API Reference
+
+## `userSignup()`
+
+```js
+auth.userSignup(data, UserModel);
+```
+
+Used to register a new user.
+
+---
+
+## `userLogin()`
+
+```js
+auth.userLogin(data, UserModel);
+```
+
+Used to authenticate an existing user.
+
+---
+
+## `userUpdate()`
+
+```js
+auth.userUpdate(data, UserModel);
+```
+
+Used to update user authentication-related information.
+
+---
+
+## `userLogout()`
+
+```js
+auth.userLogout(data, UserModel);
+```
+
+Used to terminate the user's authentication session.
+
+---
+
+## `checkToken()`
+
+```js
+auth.checkToken({
+  configs: {
+    projectId,
+  },
+  info: {
+    token,
+  },
+});
+```
+
+Used to validate an authentication token.
+
+Returns information including:
+
+```js
+{
+  (valid, type, email, issuedAt, expiresAt);
+}
+```
+
+---
+
+## `newToken()`
+
+```js
+auth.newToken({
+  configs: {
+    projectId,
+  },
+  info: {
+    email,
+    type,
+  },
+});
+```
+
+Used to generate a new token.
+
+---
+
+## `createOTP()`
+
+```js
+auth.createOTP({
+  email,
+});
+```
+
+Creates an OTP and returns its hashed representation.
+
+---
+
+## `checkOTP()`
+
+```js
+auth.checkOTP({
+  otp,
+  stored,
+});
+```
+
+Checks a supplied OTP against the stored hashed OTP.
+
+---
+
+# 🧠 Request Cheat Sheet
+
+| Operation      | Method         |
+| -------------- | -------------- |
+| Register       | `userSignup()` |
+| Login          | `userLogin()`  |
+| Update         | `userUpdate()` |
+| Logout         | `userLogout()` |
+| Verify token   | `checkToken()` |
+| Generate token | `newToken()`   |
+| Create OTP     | `createOTP()`  |
+| Verify OTP     | `checkOTP()`   |
+
+### Authentication flow
+
+```text
+                 ┌──────────────┐
+                 │    Client    │
+                 └──────┬───────┘
+                        │
+                        ▼
+                ┌───────────────┐
+                │ Your Express  │
+                │     API       │
+                └───────┬───────┘
+                        │
+                        ▼
+                ┌───────────────┐
+                │     Fortis    │
+                │ Auth Service  │
+                └───────┬───────┘
+                        │
+             ┌──────────┴──────────┐
+             ▼                     ▼
+        Authentication         Token System
+             │                     │
+             ▼                     ▼
+          MongoDB            Access / Refresh
+```
+
+---
+
+# 🏗️ Typical Application Structure
+
+A project using Fortis might look like:
+
+```text
+my-app/
+│
+├── src/
+│   ├── controllers/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   └── server.js
+│
+├── .env
+├── package.json
+└── ...
+```
+
+Fortis handles the authentication-specific operations while your application remains responsible for your application's routes, business logic, and user experience.
+
+---
+
+# 🌐 Express Integration Pattern
+
+A common architecture is:
+
+```text
+POST /api/signup
+        │
+        ▼
+auth.userSignup()
+        │
+        ▼
+     User DB
+```
+
+```text
+POST /api/login
+        │
+        ▼
+auth.userLogin()
+        │
+        ▼
+Access + Refresh Token
+```
+
+```text
+GET /api/protected
+        │
+        ▼
+Authorization: Bearer <token>
+        │
+        ▼
+auth.checkToken()
+        │
+        ▼
+Protected Resource
+```
+
+---
+
+# 🔒 Important Security Rules
+
+### Never expose your secret
+
+```js
+secret: process.env.FORTIS_SECRET_KEY;
+```
+
+Keep this value on your server.
+
+### Don't hardcode credentials
+
+Avoid:
+
+```js
+const auth = new FortisConfig({
+  projectId: "my-project-id",
+  secret: "my-secret",
+});
+```
+
+Prefer:
+
+```js
+const auth = new FortisConfig({
+  projectId: process.env.FORTIS_PROJECT_ID,
+  secret: process.env.FORTIS_SECRET_KEY,
+  origin: process.env.FORTIS_ORIGIN,
+});
+```
+
+### Keep your origin synchronized
+
+Your configured:
+
+```text
+FORTIS_ORIGIN
+```
+
+must correspond to the origin configured for the Fortis project.
+
+---
+
+# 🧪 Test Mode
+
+Fortis supports:
+
+```js
+test: true;
+```
+
+for development/test scenarios.
+
+The service documentation specifies that test mode is intended as a development bypass and should not be treated as the normal production configuration.
+
+For production:
+
+```js
+test: false;
+```
+
+---
+
+# ⚡ Complete Minimal Example
+
+If you want the smallest practical Fortis application:
+
+```js
+const express = require("express");
+const mongoose = require("mongoose");
 const FortisConfig = require("@fortis/express");
 
+const app = express();
+
+app.use(express.json());
+
+mongoose.connect(process.env.MONGO_URI);
+
+const User = mongoose.model(
+  "User",
+  new mongoose.Schema({
+    email: {
+      type: String,
+      unique: true,
+    },
+    password: String,
+    accessToken: String,
+    refreshToken: String,
+    name: String,
+  }),
+);
+
 const auth = new FortisConfig({
-  projectId: "your-project-id",
-  secret: "your-secret-key",
+  projectId: process.env.FORTIS_PROJECT_ID,
+  secret: process.env.FORTIS_SECRET_KEY,
+  origin: process.env.FORTIS_ORIGIN,
+  provider: "emailPass",
+  test: false,
 });
 
-async function main() {
-  // Signup
-  const signup = await auth.userSignup({
-    email: "user@example.com",
-    password: "securePassword123",
-    name: "John Doe",
-  });
+app.post("/signup", async (req, res) => {
+  const result = await auth.userSignup(req.body, User);
 
-  // Login
-  const login = await auth.userLogin({
-    email: "user@example.com",
-    password: "securePassword123",
-  });
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
 
-  // Update access gate
-  const update = await auth.userUpdate({
-    email: "user@example.com",
-    name: "Jane Doe",
-  });
+  res.status(201).json(result);
+});
 
-  // Verify a token
-  const checked = await auth.checkToken({
-    configs: { projectId: "your-project-id" },
-    info: { token: "eyJhbGciOi..." },
-  });
+app.post("/login", async (req, res) => {
+  const result = await auth.userLogin(req.body, User);
 
-  // Logout
-  const logout = await auth.userLogout({
-    email: "user@example.com",
-  });
+  if (!result.success) {
+    return res.status(401).json(result);
+  }
 
-  // Email OTP flow
-  const otp = await auth.createOTP({ email: "user@example.com" });
-  const otpCheck = await auth.checkOTP({
-    otp: "123456",
-    stored: otp.result.otp,
-  });
-}
+  res.json(result);
+});
 
-main();
+app.post("/logout", async (req, res) => {
+  const result = await auth.userLogout(req.body, User);
+
+  res.json(result);
+});
+
+app.listen(5000, () => {
+  console.log("Fortis application running on port 5000");
+});
 ```
 
 ---
 
-## 🏗️ Project Structure
+# 💡 Why Fortis?
 
-```
-@fortis/express/
-├── index.js          # Entry point — exports FortisConfig
-├── config/
-│   └── index.js      # Core configuration class (Singleton)
-├── utils/
-│   ├── index.js      # Method definitions for all auth operations
-│   └── request.js    # HTTP request handler (fetch-based)
-├── package.json      # Package manifest
-└── README.md         # Documentation (you are here)
-```
+Authentication is one of those pieces of backend infrastructure that repeatedly appears in almost every application.
 
----
+Fortis provides a reusable authentication layer so developers can focus on their application's actual features instead of rebuilding the same authentication functionality from scratch.
 
-## 🧪 Running Tests
-
-```bash
-npm test
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1. **Fork** the repository
-2. **Create** your feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add some amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
-
-### Development Guidelines
-
-- Follow existing code style and conventions
-- Write clear, descriptive commit messages
-- Update documentation as needed
-- Ensure all tests pass before submitting
-
----
-
-## 📄 License
-
-This project is **free and open-source** software licensed under the [MIT License](LICENSE).
-
-```
-MIT License
-
-Copyright (c) 2026 Mashrafi Mahin
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+```text
+Your Application
+       │
+       ├── Business Logic
+       ├── Database
+       ├── API
+       │
+       └── Fortis
+             │
+             ├── Signup
+             ├── Login
+             ├── Logout
+             ├── Tokens
+             ├── OTP
+             └── Authentication
 ```
 
 ---
 
-<div align="center">
+# 📌 Current Provider
 
-**Made with ❤️ by [Mashrafi Mahin](https://github.com/mashrafimahin)**
+The documented authentication provider is:
 
-</div>
+```text
+emailPass
+```
+
+The Fortis configuration currently uses:
+
+```js
+provider: "emailPass";
+```
+
+Additional providers can be introduced as the service evolves.
+
+---
+
+# 🗺️ Quick Reference
+
+```text
+INSTALL
+   │
+   ▼
+npm i @fortis/express
+   │
+   ▼
+CREATE FORTIS PROJECT
+   │
+   ▼
+GET PROJECT ID + SECRET
+   │
+   ▼
+CONFIGURE ENVIRONMENT
+   │
+   ▼
+INITIALIZE FORTIS
+   │
+   ▼
+CONNECT YOUR USER MODEL
+   │
+   ▼
+┌─────────────────────────┐
+│ userSignup()            │
+│ userLogin()             │
+│ userLogout()            │
+│ userUpdate()            │
+│ checkToken()            │
+│ newToken()              │
+│ createOTP()             │
+│ checkOTP()              │
+└─────────────────────────┘
+```
+
+---
+
+# 📖 Documentation
+
+For the complete service architecture, request/response structures, limits, and implementation details, refer to the Fortis service documentation.
+
+---
+
+# 👨‍💻 Author
+
+**Mashrafi Mahin**
+
+---
+
+> **Fortis — Authentication, simplified.**
+>
+> Build your application. Let Fortis handle the authentication layer.
