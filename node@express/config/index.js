@@ -17,7 +17,6 @@ class FortisConfig {
   #secret_key;
   #origin;
   #provider;
-  #baseUrl;
   #test;
 
   constructor(config) {
@@ -33,8 +32,6 @@ class FortisConfig {
     this.#secret_key = config.secret;
     this.#origin = config.origin;
     this.#provider = config.provider || "emailPass";
-    // balancer entry (matches frontend VITE_API_KEY) — override for direct processor use
-    this.#baseUrl = config.baseUrl || config.fortisDomain || "http://localhost:6030";
     this.#test = config.test || false;
     instance = this;
   }
@@ -48,11 +45,6 @@ class FortisConfig {
       provider: this.#provider,
       test: this.#test,
     };
-  }
-
-  // internal: base url for the request layer only
-  _getBaseUrl() {
-    return this.#baseUrl;
   }
 
   // signup -> POST /auth/signup

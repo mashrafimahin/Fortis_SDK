@@ -11,7 +11,6 @@ const request = async (path, context, data, opts) => {
   try {
     const gated = !opts || opts.gated !== false;
     const cfg = context._getConfig();
-    const baseUrl = context._getBaseUrl();
     let body;
     if (gated) {
       body = {
@@ -27,14 +26,14 @@ const request = async (path, context, data, opts) => {
     } else {
       body = { ...(data || {}) };
     }
-    const response = await fetch(baseUrl + path, {
+    const response = await fetch(process.env.API_KEY + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.success === false) {
-      const msg = result.message || ("Request failed (" + response.status + ").");
+      const msg = result.message || "Request failed (" + response.status + ").";
       throw Error(msg);
     }
     return result;
