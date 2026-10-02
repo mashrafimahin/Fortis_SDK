@@ -18,7 +18,6 @@ const request = async (path, context, data, opts) => {
           projectId: cfg.projectId,
           secret: cfg.secret,
           origin: cfg.origin,
-          provider: cfg.provider,
           test: cfg.test,
         },
         info: { ...(data || {}) },

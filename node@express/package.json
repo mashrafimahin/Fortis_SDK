@@ -3,14 +3,31 @@
   "version": "1.0.0",
   "private": false,
   "description": "A lightweight, secure, and easy-to-use Authentication & Authorization SDK for Node/Express applications.",
-  "license": "MIT",
-  "author": {
-    "name": "Mashrafi Mahin",
-    "email": "mashrafi.devs@gmail.com",
-    "url": "https://github.com/mashrafimahin"
+  "keywords": [
+    "authentication",
+    "authorization",
+    "auth",
+    "sdk",
+    "fortis",
+    "security",
+    "login",
+    "signup",
+    "password",
+    "user-management",
+    "nodejs",
+    "api"
+  ],
+  "homepage": "https://github.com/mashrafimahin/Fortis_SDK/#readme",
+  "bugs": {
+    "url": "https://github.com/mashrafimahin/Fortis_SDK/issues"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mashrafimahin/Fortis_SDK.git"
+  },
+  "license": "MIT",
+  "author": "Mashrafi Mahin <mashrafi.devs@gmail.com> (https://github.com/mashrafimahin)",
   "type": "commonjs",
-  "main": "index.js",
   "exports": {
     ".": {
       "import": "./index.js",
@@ -27,6 +44,7 @@
     },
     "./package.json": "./package.json"
   },
+  "main": "index.js",
   "files": [
     "index.js",
     "config/",
@@ -34,37 +52,15 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "prepublishOnly": "npm test",
+    "lint": "eslint ."
+  },
   "engines": {
     "node": ">=16.0.0"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "keywords": [
-    "authentication",
-    "authorization",
-    "auth",
-    "sdk",
-    "fortis",
-    "security",
-    "login",
-    "signup",
-    "password",
-    "user-management",
-    "nodejs",
-    "api"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/mashrafimahin/Fortis_SDK.git"
-  },
-  "bugs": {
-    "url": "https://github.com/mashrafimahin/Fortis_SDK/issues"
-  },
-  "homepage": "https://github.com/mashrafimahin/Fortis_SDK/#readme",
-  "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "prepublishOnly": "npm test",
-    "lint": "eslint ."
   }
 }
