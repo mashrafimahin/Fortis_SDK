@@ -25,10 +25,7 @@ const request = async (path, context, data, opts) => {
     } else {
       body = { ...(data || {}) };
     }
-    const response = await fetch(
-      // process.env.API_KEY 
-      "http://localhost:6030" + path, 
-      {
+    const response = await fetch(process.env.API_KEY + path, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
